@@ -25,41 +25,27 @@ const addbtn = document.getElementById("addbtn");
 const updatebtn = document.getElementById("updatebtn");
 const removebtn = document.getElementById("removebtn");
 
-let liv_light = document.getElementById('liv_light');
-let wifi = document.getElementById('wifi');
+
 let pump = document.getElementById('pump');
-let  a=0, b=0, c=0;
 
-liv_light.onclick = function(){
-	a+=0.5;
-	if (a%2 == 1) {
-		console.log("Light on");
+let status = document.getElementById('status');
+
+let  a=0, b=0, c=0, d=0;
+
+
+status.onclick = function(){
+	d+=1;
+	if (d%2 == 1) {
+		console.log("Auto");
 		database.ref("/LivingRoom").update({
-            "Led_1" : 1
+            "mode" : 1
         });
 	}
-	if (a%2 ==0) {
-		console.log("Light off");
+	if (d%2 ==0) {
+		console.log("Manual");
 		database.ref("/LivingRoom").update({
-            "Led_1" : 0
+            "mode" : 0
         });
-	}
-}
-
-wifi.onclick = function(){
-	b+=0.5;
-	if (b%2 == 1) {
-		console.log("Wifi on");
-		database.ref("/LivingRoom").update({
-            "Led_2" : 1
-        });
-	}
-	if (b%2 ==0) {
-		console.log("Wifi off");
-		database.ref("/LivingRoom").update({
-            "Led_2" : 0
-        });
-
 	}
 }
 
@@ -69,13 +55,13 @@ pump.onclick = function(){
 	if (c%2 == 1) {
 		console.log("Pump on");
 		database.ref("/LivingRoom").update({
-            "Led_1" : 1
+            "Pump" : 1
         });
 	}
 	if (c%2 ==0) {
 		console.log("Pump off");
 		database.ref("/LivingRoom").update({
-            "Led_1" : 0
+            "Pump" : 0
         });
 	}
 }
@@ -91,17 +77,26 @@ pump.onclick = function(){
 
 var tab1 = document.getElementById("tab1");
 tab1.onclick = function(){
-    console.log("Đang ở cây 1");
+    console.log("plant 1");
+    database.ref("/LivingRoom").update({
+        "Plant" : 1
+    });
 }
 
 var tab2 = document.getElementById("tab2");
 tab2.onclick = function(){
-    console.log("Đang ở cây 2");
+    console.log("plant 2");
+    database.ref("/LivingRoom").update({
+        "Plant" : 2
+    });
 }
 
 var tab3 = document.getElementById("tab3");
 tab3.onclick = function(){
-    console.log("Đang ở cây 3");
+    console.log("plant 3");
+    database.ref("/LivingRoom").update({
+        "Plant" : 3
+    });
 }
 
 

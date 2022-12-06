@@ -34,26 +34,22 @@
     <div class="control">
       <div class="mode">
         <h2>MODE</h2>
-        <div class="ss_appliances">
-          <div class="ss_appliance" id="liv_light">
-            <input type="checkbox" name="a" id="a">
-            <label for="a">
-              <i class='fa fa-tools'></i>
-              <strong>Auto</strong>
-              <span data-o="On" data-c="off"></span>
-              <small></small>
-            </label>
-          </div>
-          <div class="ss_appliance" id="wifi">
-            <input type="checkbox" name="a" id="b">
-            <label for="b">
-              <i class='fa fa-hand'></i>
-              <strong>Manual</strong>
-              <span data-o="On" data-c="off"></span>
-              <small></small>
-            </label>
-          </div>
+
+
+        <div class="custom-checkbox">
+          <input id="status" 
+                 type="checkbox" 
+                 name="status">
+          <label for="status">
+            <div class="status-switch"
+                 data-unchecked="MANUAL"
+                 data-checked="AUTO">
+            </div>
+          </label>
         </div>
+
+        
+
       </div>
       
       <div class="mode_manual">
@@ -106,12 +102,12 @@
               <div class="display_container">
                 <div class="temp">
                   <p>Temperature: </p>
-                  <span class="temperature" id="nhietdo"> 00°C</span>
+                  <span class="temperature" id="nhietdo"> 34°C</span>
                 </div>
   
                 <div class="humid">
-                  <p>Humidity: </p>
-                  <span class="humidity" id="doam"> 00%</span>
+                  <p>Moisture: </p>
+                  <span class="humidity" id="doam"> 40%</span>
                 </div>
               </div>
               <div class="img-tree">
@@ -132,12 +128,12 @@
                 <div class="display_container">
                   <div class="temp">
                     <p>Temperature: </p>
-                    <span class="temperature" id="nhietdo"> 00°C</span>
+                    <span class="temperature" id="nhietdo"> 21°C</span>
                   </div>
     
                   <div class="humid">
-                    <p>Humidity: </p>
-                    <span class="humidity" id="doam"> 00%</span>
+                    <p>Moisture: </p>
+                    <span class="humidity" id="doam"> 35%</span>
                   </div>
                 </div>
                 <div class="img-tree">
@@ -158,12 +154,12 @@
                 <div class="display_container">
                   <div class="temp">
                     <p>Temperature: </p>
-                    <span class="temperature" id="nhietdo"> 00°C</span>
+                    <span class="temperature" id="nhietdo"> 35°C</span>
                   </div>
     
                   <div class="humid">
-                    <p>Humidity: </p>
-                    <span class="humidity" id="doam"> 00%</span>
+                    <p>Moisture: </p>
+                    <span class="humidity" id="doam"> 46%</span>
                   </div>
                 </div>
                 <div class="img-tree">
