@@ -2,8 +2,6 @@
 #include <Wire.h>
 #include "RTClib.h"
 #include <EEPROM.h>
-#include <OneWire.h>
-#include <DallasTemperature.h>
 
 #include <Arduino.h>
 #if defined(ESP32)
@@ -13,7 +11,10 @@
 #endif
 #include <Firebase_ESP_Client.h>
 
-const int oneWireBus = 2;    //d2, dht11 
+#include "DHT.h"
+#define DHTpin 2 //D2
+#define DHTTYPE DHT11
+DHT dht(DHTpin,DHTTYPE); 
 
 #include "addons/TokenHelper.h"
 #include "addons/RTDBHelper.h"
@@ -36,10 +37,10 @@ int intValue;
 float floatValue;
 bool signupOK = false;
 
-int test;
-
-OneWire oneWire(oneWireBus);
-DallasTemperature sensors(&oneWire);
+int mode;
+int plant;
+int pump;
+#define RL1 4
 
 RTC_DS1307 RTC;
 DateTime now;
@@ -48,8 +49,8 @@ int sec_last;
 int lcdColumns = 16;
 int lcdRows = 2;
 
- const int dry = 3450; // value for dry sensor
- const int wet = 1699; // value for wet sensor
+ const int dry = 3499; // value for dry sensor
+ const int wet = 1600; // value for wet sensor
 
  char daysOfTheWeek[7][12] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 
@@ -64,6 +65,13 @@ void setup() {
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");
     delay(300);
+   lcd.init();       
+   lcd.backlight();
+   lcd.clear();
+   Wire.begin();
+    dht.begin();
+   RTC.begin();
+   sec_last=EEPROM.read(0);
   }
   Serial.println();
   Serial.print("Connected with IP: ");
@@ -84,28 +92,27 @@ void setup() {
 
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
+  pinMode(RL1, OUTPUT);
   
-   Wire.begin();
-   sensors.begin(); 
-   RTC.begin();
-   sec_last=EEPROM.read(0);
+
   
-   lcd.init();       
-   lcd.backlight();
-   lcd.clear();
+
 
 
 }
 
 void loop() {
-    timeDisplay();
-    mosDisplay();
-    Temp();
-    readData();
+   timeDisplay();
+
+    moisDisplay();
+
+    TempHum();
+
+    readMode();
+
     reconnect();
 
-  delay(500);
-  
+  delay(700);
 }
 
 void timeDisplay() {
@@ -114,8 +121,7 @@ void timeDisplay() {
   int mnt = now.minute();
   int hr = now.hour();
    lcd.setCursor(0, 0);
-   lcd.print("          "); 
-  
+   lcd.print("     "); 
     lcd.setCursor(0, 0);
     if(now.hour()<=9)
     {
@@ -134,7 +140,7 @@ void timeDisplay() {
     else {
      lcd.print(now.minute()); 
     }
-    lcd.print(':');
+        lcd.print(':');
     if(now.second()<=9)
     {
       lcd.print("0");
@@ -143,39 +149,50 @@ void timeDisplay() {
     else {
      lcd.print(now.second()); 
     }
-
   EEPROM.write(0,sec);
 
 }
 
-void mosDisplay() {
+void moisDisplay() {
     int sensorVal = analogRead(34); //d34, mois sensor
-    int percentageHumididy = map(sensorVal, dry, wet, 0, 100); 
+    int percentageHumididy = map(sensorVal, dry, wet, 0, 99); 
+    Firebase.RTDB.setInt(&fbdo, "LivingRoom/soilMos",percentageHumididy);
    Serial.print(percentageHumididy);
    Serial.println("%"); 
-   lcd.setCursor(4, 1);
-   lcd.print("    "); 
+   lcd.setCursor(3, 1);
+   lcd.print("  "); 
    lcd.setCursor(0, 1);
-   lcd.print("Mos:");
+   lcd.print("M:");
    lcd.print(percentageHumididy);
    lcd.print("%");
 }
 
-void reset_time(){
-    RTC.adjust(DateTime(0,0,0,0,0,0));
-}
 
-void Temp(){
-   sensors.requestTemperatures(); 
-  int temperatureC = sensors.getTempCByIndex(0);
-    Serial.print(temperatureC);
-  Serial.println("ºC");
-     lcd.setCursor(13, 1);
-   lcd.print("    "); 
-   lcd.setCursor(8, 1);
-   lcd.print("Temp:");
-   lcd.print(temperatureC);
-   lcd.print("c");
+void TempHum(){
+    Firebase.RTDB.setFloat(&fbdo, "LivingRoom/Humidity",dht.readHumidity());
+    Firebase.RTDB.setFloat(&fbdo, "LivingRoom/Temperature",dht.readTemperature());
+
+    int hm=dht.readHumidity();
+    Serial.print("Humidity ");
+    Serial.println(hm);
+     lcd.setCursor(11, 1);
+    lcd.print("H:");
+    lcd.setCursor(13, 1);
+    lcd.print("  "); 
+    lcd.setCursor(13, 1);
+    lcd.print(hm);
+    lcd.print("%");
+
+    int temp=dht.readTemperature();
+    Serial.print("Temperature ");
+    Serial.println(temp);
+    lcd.setCursor(5, 1);
+    lcd.print("T:");
+    lcd.setCursor(7, 1);
+    lcd.print("  "); 
+    lcd.setCursor(7, 1);
+    lcd.print(temp);
+    lcd.print("c");
 }
 
 void reconnect()
@@ -187,20 +204,46 @@ void reconnect()
   }
 }
 
-void readData() {
-    if (Firebase.RTDB.getInt(&fbdo, "/LivingRoom/test")) {
+void readMode() {
+    if (Firebase.RTDB.getInt(&fbdo, "/LivingRoom/mode")) {
       if (fbdo.dataType() == "int") {
-        test = fbdo.intData();
-        Serial.println(test);
-         lcd.setCursor(16, 0);
-         lcd.print(" "); 
-         lcd.setCursor(10, 0);
-         lcd.print("Mode:");
-         lcd.print(test);
+        mode = fbdo.intData();
+        Serial.println(mode);
+         if (mode==0) {
+          lcd.setCursor(9, 0);
+          lcd.print("       ");
+          lcd.setCursor(9, 0);
+          lcd.print("Manual");
+              Firebase.RTDB.getInt(&fbdo, "/LivingRoom/Pump");
+              if (fbdo.dataType() == "int") {
+              pump = fbdo.intData();
+                     if (pump == 0) {
+                      digitalWrite(RL1, HIGH);
+                     }
+                     else {
+                     digitalWrite(RL1, LOW);
+                          }
+              }
+         }
+         else if (mode==1) {
+          lcd.setCursor(9, 0);
+          lcd.print("       ");
+          lcd.setCursor(9, 0);
+          lcd.print("Auto");
+          
+          Firebase.RTDB.getInt(&fbdo, "/LivingRoom/Plant");
+                if (fbdo.dataType() == "int") {
+                 plant = fbdo.intData();
+          lcd.setCursor(15, 0);
+          lcd.print(" ");
+          lcd.setCursor(15, 0);
+          lcd.print(plant);
+         }
       }
     }
       else {
        Serial.println(fbdo.errorReason());
        }
 
+}
 }
