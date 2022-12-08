@@ -99,4 +99,20 @@ tab3.onclick = function(){
     });
 }
 
+database.ref("/LivingRoom/Temperature").on("value", function(snapshot) {
+	var Temp=snapshot.val();
+	document.getElementById("temperature").innerHTML=Temp;
+	console.log("Temp is: " + Temp);
+});
 
+database.ref("/LivingRoom/Humidity").on("value", function(snapshot) {
+	var Hum=snapshot.val();
+	document.getElementById("humidity").innerHTML=Hum;
+	console.log("Hum is: " +Hum);
+});
+
+database.ref("/LivingRoom/soilMos").on("value", function(snapshot) {
+	var mois=snapshot.val();
+	document.getElementById("soilMois").innerHTML=mois;
+	console.log("soil mois is: " +mois);
+});
