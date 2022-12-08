@@ -3,6 +3,13 @@
 #include "RTClib.h"
 #include <EEPROM.h>
 
+#include <NTPClient.h>
+#include <WiFiUdp.h>
+
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "pool.ntp.org");
+
+
 #include <Arduino.h>
 #if defined(ESP32)
   #include <WiFi.h>
@@ -70,9 +77,16 @@ void setup() {
    lcd.clear();
    Wire.begin();
     dht.begin();
-   RTC.begin();
-   sec_last=EEPROM.read(0);
+
   }
+   timeClient.begin();
+   timeClient.setTimeOffset(25200);
+   timeClient.update();
+     int currentHour = timeClient.getHours();
+     int currentMinute = timeClient.getMinutes();
+     int Sec = timeClient.getSeconds();
+     EEPROM.write(0, Sec);
+  
   Serial.println();
   Serial.print("Connected with IP: ");
   Serial.println(WiFi.localIP());
@@ -93,6 +107,9 @@ void setup() {
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
   pinMode(RL1, OUTPUT);
+  
+     RTC.begin();
+   sec_last=EEPROM.read(0);
   
 
   
@@ -117,43 +134,44 @@ void loop() {
 
 void timeDisplay() {
      now = RTC.now();
-       int sec = now.second();
-  int mnt = now.minute();
-  int hr = now.hour();
+       int sec = timeClient.getSeconds();
+  int mnt = timeClient.getMinutes();
+  int hr = timeClient.getHours();
    lcd.setCursor(0, 0);
    lcd.print("     "); 
     lcd.setCursor(0, 0);
-    if(now.hour()<=9)
+    if(timeClient.getHours()<=9)
     {
       lcd.print("0");
-      lcd.print(now.hour());
+      lcd.print(timeClient.getHours());
     }
     else {
-     lcd.print(now.hour()); 
+     lcd.print(timeClient.getHours()); 
     }
     lcd.print(':');
-    if(now.minute()<=9)
+    if(timeClient.getMinutes()<=9)
     {
       lcd.print("0");
-      lcd.print(now.minute());
+      lcd.print(timeClient.getMinutes());
     }
     else {
-     lcd.print(now.minute()); 
+     lcd.print(timeClient.getMinutes()); 
     }
         lcd.print(':');
-    if(now.second()<=9)
+    if(timeClient.getSeconds()<=9)
     {
       lcd.print("0");
-      lcd.print(now.second());
+      lcd.print(timeClient.getSeconds());
     }
     else {
-     lcd.print(now.second()); 
+     lcd.print(timeClient.getSeconds()); 
     }
   EEPROM.write(0,sec);
 
 }
 
 void moisDisplay() {
+   if ((millis() - sendDataPrevMillis > 2000 || sendDataPrevMillis == 0)) {
     int sensorVal = analogRead(34); //d34, mois sensor
     int percentageHumididy = map(sensorVal, dry, wet, 0, 99); 
     Firebase.RTDB.setInt(&fbdo, "LivingRoom/soilMos",percentageHumididy);
@@ -165,10 +183,12 @@ void moisDisplay() {
    lcd.print("M:");
    lcd.print(percentageHumididy);
    lcd.print("%");
+   }
 }
 
 
 void TempHum(){
+   if ((millis() - sendDataPrevMillis > 2000 || sendDataPrevMillis == 0)) {
     Firebase.RTDB.setFloat(&fbdo, "LivingRoom/Humidity",dht.readHumidity());
     Firebase.RTDB.setFloat(&fbdo, "LivingRoom/Temperature",dht.readTemperature());
 
@@ -193,6 +213,7 @@ void TempHum(){
     lcd.setCursor(7, 1);
     lcd.print(temp);
     lcd.print("c");
+   }
 }
 
 void reconnect()
@@ -205,6 +226,7 @@ void reconnect()
 }
 
 void readMode() {
+   if ((millis() - sendDataPrevMillis > 1000 || sendDataPrevMillis == 0)) {
     if (Firebase.RTDB.getInt(&fbdo, "/LivingRoom/mode")) {
       if (fbdo.dataType() == "int") {
         mode = fbdo.intData();
@@ -234,16 +256,46 @@ void readMode() {
           Firebase.RTDB.getInt(&fbdo, "/LivingRoom/Plant");
                 if (fbdo.dataType() == "int") {
                  plant = fbdo.intData();
-          lcd.setCursor(15, 0);
-          lcd.print(" ");
-          lcd.setCursor(15, 0);
-          lcd.print(plant);
+                  lcd.setCursor(15, 0);
+                  lcd.print(" ");
+                  lcd.setCursor(15, 0);
+                  lcd.print(plant);
+                  if (plant==1) {
+                        int sensorVal = analogRead(34); 
+                        int mois = map(sensorVal, dry, wet, 0, 99); 
+                    if (dht.readTemperature()>34 && mois <40) {
+                         digitalWrite(RL1, LOW);
+                         }
+                         else {
+                         digitalWrite(RL1, HIGH);
+                              } 
+                    }
+                    else if (plant==2) {
+                      int sensorVal = analogRead(34); 
+                        int mois = map(sensorVal, dry, wet, 0, 99); 
+                    if (dht.readTemperature()>21 && mois <35) {
+                         digitalWrite(RL1, LOW);
+                         }
+                         else {
+                         digitalWrite(RL1, HIGH);
+                              } 
+                  }
+                  else if (plant==3) {
+                         int sensorVal = analogRead(34); 
+                        int mois = map(sensorVal, dry, wet, 0, 99); 
+                     if (dht.readTemperature()>34 && mois <40) {
+                         digitalWrite(RL1, LOW);
+                         }
+                         else {
+                         digitalWrite(RL1, HIGH);
+                              } 
+                  }
          }
       }
     }
       else {
        Serial.println(fbdo.errorReason());
        }
-
+    }
 }
 }
