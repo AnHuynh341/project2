@@ -26,13 +26,13 @@ DHT dht(DHTpin,DHTTYPE);
 #include "addons/TokenHelper.h"
 #include "addons/RTDBHelper.h"
 
-#define WIFI_SSID "Hanh Tram"
-#define WIFI_PASSWORD "12356789"
+#define WIFI_SSID "wifi name"
+#define WIFI_PASSWORD "wifi pw"
 
-#define USER_EMAIL "c0nvit@duck.com"
-#define USER_PASSWORD "12356789"
-#define API_KEY "AIzaSyC87A38QuE8E06DE9ceJc95G724zz0Ledw"
-#define DATABASE_URL "https://anhuynhsmarthome-default-rtdb.asia-southeast1.firebasedatabase.app/" 
+#define USER_EMAIL "email here"
+#define USER_PASSWORD "pw"
+#define API_KEY "key"
+#define DATABASE_URL "url" 
 
 FirebaseData fbdo;
 
